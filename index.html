@@ -1,0 +1,2491 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Project Management Prototype</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: #f3f4f6;
+      }
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 10px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #555;
+      }
+      .sidebar-icon {
+        transition: all 0.3s ease;
+      }
+      .sidebar-icon:hover {
+        transform: scale(1.1);
+      }
+      .task-card {
+        transition: box-shadow 0.3s ease;
+      }
+      .task-card:hover {
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+          0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      }
+      .status-not-started,
+      .status-todo,
+      .status-planned {
+        background-color: #d1d5db;
+        color: #4b5563;
+      }
+      .status-in-progress {
+        background-color: #60a5fa;
+        color: #ffffff;
+      }
+      .status-completed {
+        background-color: #34d399;
+        color: #ffffff;
+      }
+      .status-on-hold {
+        background-color: #f59e0b;
+        color: #ffffff;
+      }
+      .priority-high {
+        color: #ef4444;
+      }
+      .priority-medium {
+        color: #f59e0b;
+      }
+      .priority-low {
+        color: #3b82f6;
+      }
+      .main-content {
+        padding-top: 1rem;
+      }
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.5);
+      }
+      .modal-content {
+        background-color: #fff;
+        margin: 5% auto;
+        padding: 20px;
+        border-radius: 8px;
+        width: 60%;
+        max-width: 700px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      }
+      .modal-content-sm {
+        max-width: 450px;
+        margin: 15% auto;
+      }
+      .modal-header {
+        padding-bottom: 10px;
+        border-bottom: 1px solid #eee;
+        font-size: 1.25rem;
+        font-weight: 600;
+      }
+      .modal-body {
+        padding-top: 15px;
+        padding-bottom: 15px;
+        max-height: 70vh;
+        overflow-y: auto;
+      }
+      .modal-footer {
+        padding-top: 10px;
+        border-top: 1px solid #eee;
+        text-align: right;
+      }
+      .close-button {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+      }
+      .close-button:hover,
+      .close-button:focus {
+        color: black;
+        text-decoration: none;
+      }
+      .timeline-bar-container {
+        display: flex;
+        align-items: center;
+        margin-bottom: 8px;
+        font-size: 0.875rem;
+      }
+      .timeline-label {
+        width: 120px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        padding-right: 10px;
+      }
+      .timeline-bar {
+        height: 20px;
+        border-radius: 4px;
+        background-color: #3b82f6;
+        position: relative;
+      }
+      .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: 1px;
+        background-color: #d1d5db;
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+      }
+      .calendar-day-header {
+        background-color: #f9fafb;
+        padding: 0.5rem;
+        text-align: center;
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: #4b5563;
+      }
+      .calendar-day {
+        background-color: #fff;
+        padding: 0.75rem;
+        min-height: 80px;
+        font-size: 0.75rem;
+        cursor: pointer;
+      }
+      .calendar-day:hover {
+        background-color: #eff6ff;
+      }
+      .calendar-day .day-number {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+      }
+      .availability-dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-right: 4px;
+      }
+      .available {
+        background-color: #34d399;
+      }
+      .unavailable {
+        background-color: #ef4444;
+      }
+      .tentative {
+        background-color: #f59e0b;
+      }
+      .milestone-status-icon {
+        margin-right: 0.5rem;
+      }
+      .milestone-completed .fa-flag-checkered {
+        color: #34d399;
+      }
+      .milestone-in-progress .fa-flag-checkered {
+        color: #f59e0b;
+      }
+      .milestone-planned .fa-flag-checkered {
+        color: #9ca3af;
+      }
+      .notification-dropdown {
+        display: none;
+        position: absolute;
+        right: 0;
+        top: 100%;
+        background-color: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.375rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+          0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        width: 300px;
+        z-index: 1010;
+        margin-top: 0.5rem;
+      }
+      .notification-item {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #f3f4f6;
+        font-size: 0.875rem;
+      }
+      .notification-item:last-child {
+        border-bottom: none;
+      }
+      .notification-item strong {
+        color: #3b82f6;
+      }
+    </style>
+
+    <script>
+      // --- Global Mock Data ---
+      let mockTasks = [
+        {
+          id: 1,
+          name: "Develop homepage design",
+          description:
+            "Create mockups and final design for the new product landing page.",
+          assignee: "Alex Robert",
+          dueDate: "2025-05-20",
+          priority: "High",
+          status: "In Progress",
+          estimatedHours: 40,
+          subtasks: [
+            { text: "Wireframes", done: true },
+            { text: "Mockups", done: false },
+          ],
+          files: ["homepage_v1.fig"],
+        },
+        {
+          id: 2,
+          name: "Write blog post content",
+          description: "Draft a compelling blog post about our new features.",
+          assignee: "Jack Thompson",
+          dueDate: "2025-05-25",
+          priority: "Medium",
+          status: "Not Started",
+          estimatedHours: 16,
+          subtasks: [],
+          files: [],
+        },
+        {
+          id: 3,
+          name: "User testing session",
+          description:
+            "Organize and conduct user testing for the new interface.",
+          assignee: "Sarah Lee",
+          dueDate: "2025-05-10",
+          priority: "High",
+          status: "Completed",
+          estimatedHours: 24,
+          subtasks: [],
+          files: [],
+        },
+        {
+          id: 4,
+          name: "Finalize Q3 budget",
+          description: "Review and finalize the budget for the third quarter.",
+          assignee: "Alex Robert",
+          dueDate: "2025-05-18",
+          priority: "High",
+          status: "To Do",
+          estimatedHours: 8,
+          subtasks: [],
+          files: [],
+        },
+        {
+          id: 5,
+          name: "Draft initial marketing copy",
+          description:
+            "Create initial copy for the upcoming marketing campaign.",
+          assignee: "Jack Thompson",
+          dueDate: "2025-05-22",
+          priority: "Medium",
+          status: "To Do",
+          estimatedHours: 20,
+          subtasks: [
+            { text: "Research competitors", done: true },
+            { text: "Outline key points", done: false },
+          ],
+          files: [],
+        },
+        {
+          id: 6,
+          name: "Setup analytics dashboard",
+          description: "Implement and configure the new analytics dashboard.",
+          assignee: "Sarah Lee",
+          dueDate: "2025-06-01",
+          priority: "Medium",
+          status: "Not Started",
+          estimatedHours: 12,
+          subtasks: [],
+          files: [],
+        },
+      ];
+      let nextTaskId = 7;
+
+      let timeEntries = [
+        {
+          id: 1,
+          date: "2025-05-10",
+          taskId: 1,
+          taskName: "Develop homepage design",
+          hours: 4,
+          description: "Initial wireframes and mockups",
+        },
+        {
+          id: 2,
+          date: "2025-05-11",
+          taskId: 1,
+          taskName: "Develop homepage design",
+          hours: 6,
+          description: "Refined design elements",
+        },
+        {
+          id: 3,
+          date: "2025-05-12",
+          taskId: 3,
+          taskName: "User testing session",
+          hours: 8,
+          description: "Conducted user interviews",
+        },
+      ];
+
+      const mockTeamMembers = [
+        { id: "Alex Robert", name: "Alex Robert" },
+        { id: "Jack Thompson", name: "Jack Thompson" },
+        { id: "Sarah Lee", name: "Sarah Lee" },
+        { id: "Mike Brown", name: "Mike Brown" },
+        { id: "Unassigned", name: "Unassigned" },
+      ];
+
+      let mockMilestones = [
+        {
+          id: 1,
+          name: "Phase 1: Research & Planning",
+          dueDate: "2025-04-30",
+          status: "Completed",
+        },
+        {
+          id: 2,
+          name: "Phase 2: Design & Development",
+          dueDate: "2025-06-15",
+          status: "In Progress",
+        },
+        {
+          id: 3,
+          name: "Phase 3: Testing & Launch",
+          dueDate: "2025-07-30",
+          status: "Planned",
+        },
+      ];
+      let nextMilestoneId = 4;
+
+      // Availability: Key is YYYY-MM-DD
+      let mockAvailability = {
+        "Alex Robert": {
+          "2025-05-05": "available",
+          "2025-05-10": "tentative",
+          "2025-05-15": "unavailable",
+        },
+        "Jack Thompson": {
+          "2025-05-03": "available",
+          "2025-05-12": "unavailable",
+          "2025-05-22": "tentative",
+        },
+        "Sarah Lee": {
+          "2025-05-08": "available",
+          "2025-05-18": "available",
+          "2025-05-25": "unavailable",
+        },
+      };
+      let currentEditingCalendarDay = null;
+      let currentCalendarMonthYear = { month: 4, year: 2025 }; // May 2025 (0-indexed month for Date object)
+
+      let mockSharedFiles = [
+        {
+          name: "ProjectBrief_v2.pdf",
+          uploader: "Alex",
+          date: "2 days ago",
+          icon: "fa-file-alt",
+          color: "text-blue-500",
+        },
+        {
+          name: "MarketingStrategy.docx",
+          uploader: "Jack",
+          date: "1 day ago",
+          icon: "fa-file-word",
+          color: "text-purple-500",
+        },
+      ];
+
+      let mockChatMessages = [
+        {
+          sender: "Alex",
+          text: "Hey team, any updates on the design mockups? @Jack",
+          time: "10:30 AM",
+          self: false,
+        },
+        {
+          sender: "You",
+          text: "Working on them now, should have something by EOD.",
+          time: "10:32 AM",
+          self: true,
+        },
+        {
+          sender: "Jack",
+          text: "Received! Will review the requirements again.",
+          time: "10:35 AM",
+          self: false,
+        },
+      ];
+
+      let mockNotifications = [
+        {
+          id: 1,
+          text: "Task <strong>Develop homepage design</strong> is due tomorrow.",
+          read: false,
+          link: "#tasks",
+          taskId: 1,
+        },
+        {
+          id: 2,
+          text: "<strong>Sarah Lee</strong> commented on task <strong>Finalize Q3 budget</strong>.",
+          read: true,
+          link: "#tasks",
+          taskId: 4,
+        },
+        {
+          id: 3,
+          text: "Milestone <strong>Phase 2: Design & Development</strong> is approaching.",
+          read: false,
+          link: "#reports",
+        },
+      ];
+
+      // --- Utility Functions ---
+      function getTaskById(taskId) {
+        return mockTasks.find((task) => task.id === parseInt(taskId));
+      }
+      function getStatusClass(status) {
+        if (!status) return "status-not-started";
+        const s = status.toLowerCase().replace(/\s+/g, "-");
+        if (s === "to-do" || s === "planned") return "status-todo";
+        return `status-${s}`;
+      }
+      function getPriorityClass(priority) {
+        if (!priority) return "";
+        return `priority-${priority.toLowerCase()}`;
+      }
+      function getPriorityIcon(priority) {
+        if (!priority) return "";
+        const p = priority.toLowerCase();
+        if (p === "high")
+          return '<i class="fas fa-flag priority-high mr-1"></i>';
+        if (p === "medium")
+          return '<i class="fas fa-flag priority-medium mr-1"></i>';
+        if (p === "low") return '<i class="fas fa-flag priority-low mr-1"></i>';
+        return "";
+      }
+      function getMilestoneStatusIconClass(status) {
+        if (!status) return "milestone-planned";
+        return `milestone-${status.toLowerCase().replace(/\s+/g, "-")}`;
+      }
+
+      // --- Navigation ---
+      function showView(viewId) {
+        document.querySelectorAll(".view").forEach((view) => {
+          view.classList.toggle("hidden", view.id !== viewId);
+          view.classList.toggle("active-view", view.id === viewId);
+        });
+        document.querySelectorAll(".sidebar-icon").forEach((link) => {
+          const isActive =
+            link.getAttribute("href") === `#${viewId.replace("View", "")}`;
+          link.classList.toggle("bg-gray-700", isActive);
+          link.classList.toggle("text-white", isActive);
+        });
+        const taskDetailViewEl = document.getElementById("taskDetailView");
+        if (
+          taskDetailViewEl &&
+          viewId !== "tasksView" &&
+          !taskDetailViewEl.classList.contains("hidden")
+        )
+          closeTaskDetail();
+        if (viewId === "dashboardView") renderDashboard();
+        if (viewId === "tasksView") renderKanbanBoard();
+        if (viewId === "timesheetsView") renderTimesheetsView();
+        if (viewId === "collaborationView") renderCollaborationView();
+        if (viewId === "reportsView") renderReportsView();
+      }
+
+      // --- Modal Handling (General) ---
+      let editingTaskId = null;
+      function openModal(modalId, isEdit = false, data = null) {
+        const modal = document.getElementById(modalId);
+        if (!modal) return;
+        if (modalId === "newTaskModal") setupNewTaskModal(isEdit, data);
+        if (modalId === "addMilestoneModal") setupAddMilestoneModal();
+        if (modalId === "editAvailabilityModal" && data)
+          setupEditAvailabilityModal(data.date, data.dayNumber);
+        if (modalId === "reminderModal" && data)
+          setupReminderModal(data.taskName);
+        modal.style.display = "block";
+      }
+      function closeModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) modal.style.display = "none";
+        editingTaskId = null;
+        currentEditingCalendarDay = null;
+      }
+      window.onclick = function (event) {
+        [
+          "newTaskModal",
+          "reminderModal",
+          "addMilestoneModal",
+          "editAvailabilityModal",
+        ].forEach((id) => {
+          const m = document.getElementById(id);
+          if (m && event.target == m) closeModal(id);
+        });
+      };
+
+      // --- Task Modal & CRUD ---
+      function setupNewTaskModal(isEdit, taskToEdit) {
+        editingTaskId = isEdit && taskToEdit ? taskToEdit.id : null;
+        document.getElementById("modalTitle").textContent = isEdit
+          ? "Edit Task"
+          : "Create New Task";
+        const assigneeSelect = document.getElementById("taskAssigneeModal");
+        assigneeSelect.innerHTML = mockTeamMembers
+          .map(
+            (member) => `<option value="${member.id}">${member.name}</option>`
+          )
+          .join("");
+
+        document.getElementById("taskNameInput").value =
+          isEdit && taskToEdit ? taskToEdit.name : "";
+        document.getElementById("taskDescriptionInput").value =
+          isEdit && taskToEdit ? taskToEdit.description || "" : "";
+        assigneeSelect.value =
+          isEdit && taskToEdit ? taskToEdit.assignee : "Unassigned";
+        document.getElementById("taskDueDateModal").value =
+          isEdit && taskToEdit
+            ? taskToEdit.dueDate
+            : new Date(new Date().setDate(new Date().getDate() + 7))
+                .toISOString()
+                .split("T")[0];
+        document.getElementById("taskPriorityModal").value =
+          isEdit && taskToEdit ? taskToEdit.priority : "Medium";
+        document.getElementById("taskStatusModal").value =
+          isEdit && taskToEdit ? taskToEdit.status : "Not Started";
+        document.getElementById("taskEstimatedHoursInput").value =
+          isEdit && taskToEdit ? taskToEdit.estimatedHours || "" : "";
+
+        const modalSubtaskList = document.getElementById("modalSubtaskList");
+        modalSubtaskList.innerHTML = "";
+        if (isEdit && taskToEdit && taskToEdit.subtasks) {
+          taskToEdit.subtasks.forEach((subtask) =>
+            addSubtaskElement(modalSubtaskList.id, subtask.text, subtask.done)
+          );
+        }
+      }
+      function saveTaskFromModal() {
+        const taskName = document.getElementById("taskNameInput").value.trim();
+        if (!taskName) {
+          alert("Task name cannot be empty.");
+          return;
+        }
+        const newTaskData = {
+          name: taskName,
+          description: document
+            .getElementById("taskDescriptionInput")
+            .value.trim(),
+          assignee: document.getElementById("taskAssigneeModal").value,
+          dueDate: document.getElementById("taskDueDateModal").value,
+          priority: document.getElementById("taskPriorityModal").value,
+          status: document.getElementById("taskStatusModal").value,
+          estimatedHours:
+            parseFloat(
+              document.getElementById("taskEstimatedHoursInput").value
+            ) || 0,
+          subtasks: Array.from(
+            document.querySelectorAll("#modalSubtaskList .subtask-item")
+          )
+            .map((item) => ({
+              text: item.querySelector('input[type="text"]').value.trim(),
+              done: item.querySelector('input[type="checkbox"]').checked,
+            }))
+            .filter((st) => st.text),
+          files:
+            editingTaskId !== null
+              ? getTaskById(editingTaskId).files || []
+              : [],
+        };
+        if (editingTaskId !== null) {
+          const taskIndex = mockTasks.findIndex((t) => t.id === editingTaskId);
+          if (taskIndex > -1)
+            mockTasks[taskIndex] = { ...mockTasks[taskIndex], ...newTaskData };
+        } else {
+          mockTasks.push({ id: nextTaskId++, ...newTaskData });
+        }
+        closeModal("newTaskModal");
+        refreshAllViews();
+      }
+      function addSubtaskElement(listId, text = "", done = false) {
+        const container = document.getElementById(listId);
+        if (!container) return;
+        const count = container.children.length + 1;
+        const options = mockTasks
+          .slice(0, 3)
+          .map(
+            (t) =>
+              `<option value="task_${t.id}">Depends: ${t.name.substring(
+                0,
+                10
+              )}...</option>`
+          )
+          .join("");
+        container.insertAdjacentHTML(
+          "beforeend",
+          `<div class="subtask-item flex items-center justify-between p-2 bg-gray-50 rounded-md"><div class="flex items-center flex-grow"><input type="checkbox" class="form-checkbox h-4 w-4 text-blue-600 rounded mr-2" ${
+            done ? "checked" : ""
+          }><input type="text" value="${text}" placeholder="New Subtask ${count}" class="text-sm border-0 focus:ring-0 p-0 bg-transparent w-full flex-grow"></div><div class="flex items-center space-x-2 ml-2"><select class="text-xs border-gray-300 rounded-md p-1 w-auto"><option value="">No Dependency</option>${options}</select><button type="button" onclick="this.closest('.subtask-item').remove()" class="text-gray-400 hover:text-red-500 text-xs"><i class="fas fa-trash"></i></button></div></div>`
+        );
+      }
+
+      // --- Task Detail View ---
+      let currentOpenTaskDetailId = null;
+      function openTaskDetailById(taskId) {
+        const task = getTaskById(taskId);
+        if (!task) return;
+        currentOpenTaskDetailId = taskId;
+        showView("tasksView");
+        document.getElementById("taskDetailTitle").textContent = task.name;
+        const assigneeSelect = document.getElementById("taskDetailAssignee");
+        assigneeSelect.innerHTML = mockTeamMembers
+          .map(
+            (member) => `<option value="${member.id}">${member.name}</option>`
+          )
+          .join("");
+        assigneeSelect.value = task.assignee;
+        document.getElementById("taskDetailDueDate").value = task.dueDate;
+        document.getElementById("taskDetailPriority").value = task.priority;
+        document.getElementById("taskDetailStatus").value = task.status;
+        document.getElementById("taskDetailDescription").value =
+          task.description || "";
+        const subtaskListEl = document.getElementById("subtaskList");
+        subtaskListEl.innerHTML = "";
+        if (task.subtasks && task.subtasks.length > 0)
+          task.subtasks.forEach((subtask) =>
+            addSubtaskElement("subtaskList", subtask.text, subtask.done)
+          );
+        else
+          subtaskListEl.innerHTML =
+            '<p class="text-xs text-gray-500">No subtasks yet.</p>';
+        renderTaskFiles(taskId);
+        document.getElementById(
+          "taskDetailActionButtons"
+        ).innerHTML = `<button onclick="openModal('newTaskModal', true, getTaskById(${taskId}))" class="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-3 rounded-lg text-sm mr-2">Edit Task</button><button onclick="deleteTask(${taskId})" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-3 rounded-lg text-sm">Delete Task</button>`;
+        document.getElementById("taskDetailView").classList.remove("hidden");
+      }
+      function closeTaskDetail() {
+        const el = document.getElementById("taskDetailView");
+        if (el) el.classList.add("hidden");
+        currentOpenTaskDetailId = null;
+      }
+      function saveTaskDetail() {
+        if (currentOpenTaskDetailId === null) return;
+        const taskIndex = mockTasks.findIndex(
+          (t) => t.id === currentOpenTaskDetailId
+        );
+        if (taskIndex === -1) return;
+        const updatedData = {
+          assignee: document.getElementById("taskDetailAssignee").value,
+          dueDate: document.getElementById("taskDetailDueDate").value,
+          priority: document.getElementById("taskDetailPriority").value,
+          status: document.getElementById("taskDetailStatus").value,
+          description: document.getElementById("taskDetailDescription").value,
+          subtasks: Array.from(
+            document.querySelectorAll("#subtaskList .subtask-item")
+          )
+            .map((item) => ({
+              text: item.querySelector('input[type="text"]').value.trim(),
+              done: item.querySelector('input[type="checkbox"]').checked,
+            }))
+            .filter((st) => st.text),
+        };
+        mockTasks[taskIndex] = { ...mockTasks[taskIndex], ...updatedData }; // Files are preserved as they are part of mockTasks[taskIndex]
+        alert(`Changes to task "${mockTasks[taskIndex].name}" saved!`);
+        closeTaskDetail();
+        refreshAllViews();
+      }
+      function deleteTask(taskId) {
+        const task = getTaskById(taskId);
+        if (confirm(`Are you sure you want to delete task "${task.name}"?`)) {
+          mockTasks = mockTasks.filter((t) => t.id !== taskId);
+          if (currentOpenTaskDetailId === taskId) closeTaskDetail();
+          refreshAllViews();
+        }
+      }
+
+      function setupReminderModal(taskName) {
+        document.getElementById("reminderTaskName").textContent = taskName;
+        document.getElementById("reminderDate").value = new Date()
+          .toISOString()
+          .split("T")[0];
+        document.getElementById("reminderTime").value = "09:00";
+      }
+      function saveReminder() {
+        alert(
+          'Reminder set for task "' +
+            document.getElementById("reminderTaskName").textContent +
+            '" (Mock Action)'
+        );
+        closeModal("reminderModal");
+      }
+
+      // --- Timesheets ---
+      function renderTimesheetsView() {
+        populateTimesheetTaskDropdown();
+        renderTimeEntries();
+      }
+      function populateTimesheetTaskDropdown() {
+        const s = document.getElementById("timesheetTask");
+        if (s)
+          s.innerHTML = mockTasks
+            .map((t) => `<option value="${t.id}">${t.name}</option>`)
+            .join("");
+      }
+      function renderTimeEntries() {
+        const listEl = document.getElementById("timeEntriesList");
+        if (!listEl) return;
+        if (timeEntries.length === 0) {
+          listEl.innerHTML =
+            '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500 text-sm">No time logged yet.</td></tr>';
+          return;
+        }
+        listEl.innerHTML = timeEntries
+          .map(
+            (entry, index) =>
+              `<tr><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${
+                entry.date
+              }</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${
+                entry.taskName
+              }</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${entry.hours.toFixed(
+                1
+              )}</td><td class="px-6 py-4 text-sm text-gray-500 max-w-xs truncate" title="${
+                entry.description
+              }">${
+                entry.description || "-"
+              }</td><td class="px-6 py-4 whitespace-nowrap text-sm font-medium"><button onclick="deleteTimeEntry(${index})" class="text-red-600 hover:text-red-900">Delete</button></td></tr>`
+          )
+          .join("");
+      }
+      function deleteTimeEntry(index) {
+        if (confirm("Delete time entry?")) {
+          timeEntries.splice(index, 1);
+          renderTimeEntries();
+          if (
+            document
+              .getElementById("reportsView")
+              .classList.contains("active-view")
+          )
+            renderWorkloadReport();
+        }
+      }
+
+      // --- Collaboration View (Chat & Files) ---
+      function renderCollaborationView() {
+        renderTeamChat();
+        renderSharedFiles();
+      }
+      function renderTeamChat() {
+        const chatBox = document.getElementById("teamChatBox");
+        if (!chatBox) return;
+        chatBox.innerHTML = mockChatMessages
+          .map(
+            (msg) =>
+              `<div class="text-sm ${
+                msg.self ? "text-right" : ""
+              }"><div class="inline-block p-2 rounded-lg ${
+                msg.self
+                  ? "bg-blue-500 text-white"
+                  : "bg-gray-200 text-gray-800"
+              }">${
+                !msg.self
+                  ? `<strong class="block text-xs ${
+                      msg.sender === "Alex"
+                        ? "text-blue-700"
+                        : msg.sender === "Jack"
+                        ? "text-purple-700"
+                        : "text-gray-600"
+                    }">${msg.sender}</strong>`
+                  : ""
+              }${msg.text}<span class="block text-xs ${
+                msg.self ? "text-blue-200" : "text-gray-500"
+              } opacity-75 mt-1">${msg.time}</span></div></div>`
+          )
+          .join("");
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }
+      function sendChatMessage() {
+        const input = document.getElementById("teamChatMessageInput");
+        if (!input || !input.value.trim()) return;
+        mockChatMessages.push({
+          sender: "You",
+          text: input.value.trim(),
+          time: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          self: true,
+        });
+        input.value = "";
+        renderTeamChat();
+        setTimeout(() => {
+          mockChatMessages.push({
+            sender: "AutoBot",
+            text: "Got it! Thanks for the update.",
+            time: new Date().toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            self: false,
+          });
+          renderTeamChat();
+        }, 1500);
+      }
+      function renderSharedFiles() {
+        const fileListEl = document.getElementById("sharedFilesList");
+        if (!fileListEl) return;
+        if (mockSharedFiles.length === 0) {
+          fileListEl.innerHTML =
+            '<li class="text-sm text-gray-500">No files shared yet.</li>';
+          return;
+        }
+        fileListEl.innerHTML = mockSharedFiles
+          .map(
+            (file) =>
+              `<li class="flex justify-between items-center p-2 border-b border-gray-100 text-sm"><span><i class="fas ${
+                file.icon || "fa-file"
+              } mr-2 ${file.color || "text-gray-500"}"></i> ${
+                file.name
+              }</span><span class="text-gray-500 text-xs">Uploaded by ${
+                file.uploader
+              }, ${file.date}</span></li>`
+          )
+          .join("");
+      }
+      function mockUploadSharedFile() {
+        const fileName = prompt(
+          "Enter a mock file name to upload (e.g., report.pdf):",
+          "new_document.txt"
+        );
+        if (fileName && fileName.trim()) {
+          mockSharedFiles.push({
+            name: fileName.trim(),
+            uploader: "You",
+            date: "Just now",
+            icon: "fa-file-lines",
+            color: "text-green-500",
+          });
+          renderSharedFiles();
+          alert(`File "${fileName.trim()}" uploaded (mock action).`);
+        }
+      }
+      function renderTaskFiles(taskId) {
+        const task = getTaskById(taskId);
+        const filesListEl = document.getElementById("taskFilesList");
+        if (!filesListEl || !task) return;
+        filesListEl.innerHTML = "";
+        if (task.files && task.files.length > 0) {
+          task.files.forEach((fileName) => {
+            filesListEl.insertAdjacentHTML(
+              "beforeend",
+              `<li class="text-xs text-gray-500 list-disc list-inside">${fileName} <button onclick="removeTaskFile(${taskId}, '${fileName}')" class="text-red-500 hover:underline ml-1 text-xs">(remove)</button></li>`
+            );
+          });
+        } else {
+          filesListEl.innerHTML =
+            '<li class="text-xs text-gray-400">No files attached to this task.</li>';
+        }
+      }
+      function mockUploadTaskFile() {
+        if (currentOpenTaskDetailId === null) {
+          alert("No task selected.");
+          return;
+        }
+        const task = getTaskById(currentOpenTaskDetailId);
+        if (!task) return;
+        const fileName = prompt(
+          "Enter mock file name for this task:",
+          `task_${task.id}_file.pdf`
+        );
+        if (fileName && fileName.trim()) {
+          if (!task.files) task.files = [];
+          task.files.push(fileName.trim());
+          renderTaskFiles(currentOpenTaskDetailId);
+          alert(`File "${fileName.trim()}" attached to task (mock action).`);
+        }
+      }
+      function removeTaskFile(taskId, fileName) {
+        const task = getTaskById(taskId);
+        if (task && task.files) {
+          task.files = task.files.filter((f) => f !== fileName);
+          renderTaskFiles(taskId);
+        }
+      }
+
+      // --- Reports ---
+      function renderReportsView() {
+        renderWorkloadReport();
+        renderMilestones();
+        renderAvailabilityCalendar();
+        renderResourceAllocation();
+      }
+      function renderWorkloadReport() {
+        const body = document.getElementById("workloadReportTable");
+        if (!body) return;
+        body.innerHTML = mockTasks
+          .map((task) => {
+            const actual = timeEntries
+              .filter((e) => e.taskId === task.id)
+              .reduce((s, e) => s + e.hours, 0);
+            const variance = actual - (task.estimatedHours || 0); // Handle if estimatedHours is undefined
+            const vClass =
+              variance > 0
+                ? "text-red-500"
+                : variance < 0
+                ? "text-green-500"
+                : "";
+            return `<tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${
+              task.name
+            }</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${
+              task.estimatedHours || 0
+            } hrs</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${actual.toFixed(
+              1
+            )} hrs</td><td class="px-6 py-4 whitespace-nowrap text-sm ${vClass}">${variance.toFixed(
+              1
+            )} hrs</td></tr>`;
+          })
+          .join("");
+      }
+      function renderResourceAllocation() {
+        const body = document.getElementById("resourceAllocationTable");
+        if (!body) return;
+        const counts = mockTasks.reduce((acc, t) => {
+          acc[t.assignee] = (acc[t.assignee] || 0) + 1;
+          return acc;
+        }, {});
+        body.innerHTML = mockTeamMembers
+          .filter((m) => m.id !== "Unassigned")
+          .map((member) => {
+            const numTasks = counts[member.id] || 0;
+            const load = numTasks > 0 ? Math.min(25 + numTasks * 15, 100) : 0;
+            return `<tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${member.name}</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${numTasks}</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><div class="w-full bg-gray-200 rounded-full h-2.5"><div class="bg-blue-500 h-2.5 rounded-full" style="width: ${load}%"></div></div><span class="text-xs">${load}%</span></td></tr>`;
+          })
+          .join("");
+      }
+
+      // --- Milestones ---
+      function renderMilestones() {
+        const listEl = document.getElementById("milestonesList");
+        if (!listEl) return;
+        if (mockMilestones.length === 0) {
+          listEl.innerHTML =
+            '<li class="text-sm text-gray-500">No milestones set yet.</li>';
+          return;
+        }
+        listEl.innerHTML = mockMilestones
+          .map(
+            (m) =>
+              `<li class="flex items-center text-sm py-1 ${getMilestoneStatusIconClass(
+                m.status
+              )}"><i class="fas fa-flag-checkered milestone-status-icon"></i> ${
+                m.name
+              } - ${m.status} (Due: ${m.dueDate})</li>`
+          )
+          .join("");
+      }
+      function setupAddMilestoneModal() {
+        document.getElementById("milestoneNameInput").value = "";
+        document.getElementById("milestoneDueDateInput").value = new Date(
+          new Date().setDate(new Date().getDate() + 30)
+        )
+          .toISOString()
+          .split("T")[0];
+        document.getElementById("milestoneStatusInput").value = "Planned";
+      }
+      function saveMilestone() {
+        const name = document.getElementById("milestoneNameInput").value.trim();
+        if (!name) {
+          alert("Milestone name cannot be empty.");
+          return;
+        }
+        mockMilestones.push({
+          id: nextMilestoneId++,
+          name,
+          dueDate: document.getElementById("milestoneDueDateInput").value,
+          status: document.getElementById("milestoneStatusInput").value,
+        });
+        closeModal("addMilestoneModal");
+        renderMilestones();
+      }
+
+      // --- Availability Calendar ---
+      function renderAvailabilityCalendar() {
+        const calDiv = document.getElementById("availabilityCalendar");
+        if (!calDiv) return;
+        const calMonthYear = document.getElementById("calendarMonthYear");
+        const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+        let html = days
+          .map((d) => `<div class="calendar-day-header">${d}</div>`)
+          .join("");
+        const displayDate = new Date(
+          currentCalendarMonthYear.year,
+          currentCalendarMonthYear.month,
+          1
+        );
+        if (calMonthYear)
+          calMonthYear.textContent = displayDate.toLocaleString("default", {
+            month: "long",
+            year: "numeric",
+          });
+        const firstDay = displayDate.getDay();
+        const numDays = new Date(
+          displayDate.getFullYear(),
+          displayDate.getMonth() + 1,
+          0
+        ).getDate();
+        for (let i = 0; i < firstDay; i++)
+          html += '<div class="calendar-day bg-gray-50 cursor-default"></div>';
+        for (let day = 1; day <= numDays; day++) {
+          const dateStr = `${displayDate.getFullYear()}-${String(
+            displayDate.getMonth() + 1
+          ).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+          let dayContent = `<div class="day-number">${day}</div>`;
+          Object.keys(mockAvailability).forEach((member) => {
+            if (mockAvailability[member] && mockAvailability[member][dateStr]) {
+              const status = mockAvailability[member][dateStr];
+              dayContent += `<div><span class="availability-dot ${status}"></span><span class="text-xs">${
+                member.split(" ")[0]
+              }: ${status}</span></div>`;
+            }
+          });
+          html += `<div class="calendar-day" onclick="openModal('editAvailabilityModal', false, { date: '${dateStr}', dayNumber: ${day} })">${dayContent}</div>`;
+        }
+        calDiv.innerHTML = html;
+      }
+      function changeCalendarMonth(offset) {
+        currentCalendarMonthYear.month += offset;
+        if (currentCalendarMonthYear.month > 11) {
+          currentCalendarMonthYear.month = 0;
+          currentCalendarMonthYear.year++;
+        } else if (currentCalendarMonthYear.month < 0) {
+          currentCalendarMonthYear.month = 11;
+          currentCalendarMonthYear.year--;
+        }
+        renderAvailabilityCalendar();
+      }
+      function setupEditAvailabilityModal(date, dayNumber) {
+        currentEditingCalendarDay = date;
+        const dateObj = new Date(date + "T00:00:00");
+        document.getElementById(
+          "availabilityModalDate"
+        ).textContent = `${dateObj.toLocaleString("default", {
+          month: "long",
+        })} ${dayNumber}, ${dateObj.getFullYear()}`;
+        const memberSelect = document.getElementById(
+          "availabilityMemberSelect"
+        );
+        memberSelect.innerHTML = mockTeamMembers
+          .filter((m) => m.id !== "Unassigned")
+          .map((m) => `<option value="${m.id}">${m.name}</option>`)
+          .join("");
+        const firstMember =
+          mockTeamMembers.find((m) => m.id !== "Unassigned")?.id || "";
+        memberSelect.value = firstMember;
+        document.getElementById("availabilityStatusSelect").value =
+          mockAvailability[firstMember] && mockAvailability[firstMember][date]
+            ? mockAvailability[firstMember][date]
+            : "available";
+      }
+      function saveAvailability() {
+        const member = document.getElementById(
+          "availabilityMemberSelect"
+        ).value;
+        const status = document.getElementById(
+          "availabilityStatusSelect"
+        ).value;
+        if (!member || !currentEditingCalendarDay) return;
+        if (!mockAvailability[member]) mockAvailability[member] = {};
+        mockAvailability[member][currentEditingCalendarDay] = status;
+        closeModal("editAvailabilityModal");
+        renderAvailabilityCalendar();
+      }
+
+      // --- Dashboard & Kanban Rendering ---
+      function renderDashboard() {
+        updateDashboardSummary();
+        renderDashboardTasks();
+      }
+      function updateDashboardSummary() {
+        document.getElementById("summaryTotalTasks").textContent =
+          mockTasks.length;
+        document.getElementById("summaryInProgressTasks").textContent =
+          mockTasks.filter((t) => t.status === "In Progress").length;
+        document.getElementById("summaryCompletedTasks").textContent =
+          mockTasks.filter(
+            (t) => t.status === "Completed"
+          ).length; /* Overdue mock */
+      }
+      function renderDashboardTasks() {
+        /* ... (as before, with correct onclick for edit) ... */
+        const tableBody = document.getElementById("dashboardTasksTableBody");
+        if (!tableBody) return;
+        if (mockTasks.length === 0) {
+          tableBody.innerHTML =
+            '<tr><td colspan="7" class="px-6 py-4 text-center text-gray-500">No tasks yet. Create one!</td></tr>';
+          return;
+        }
+        tableBody.innerHTML = mockTasks
+          .map((task) => {
+            const progress =
+              task.status === "Completed"
+                ? 100
+                : task.status === "In Progress"
+                ? 60
+                : 0;
+            return `<tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 hover:text-blue-600 cursor-pointer" onclick="openTaskDetailById(${
+              task.id
+            })">${
+              task.name
+            }</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${
+              task.assignee
+            }</td><td class="px-6 py-4 whitespace-nowrap"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusClass(
+              task.status
+            )}">${
+              task.status
+            }</span></td><td class="px-6 py-4 whitespace-nowrap text-sm">${getPriorityIcon(
+              task.priority
+            )} ${
+              task.priority
+            }</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${
+              task.dueDate
+            }</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><div class="w-full bg-gray-200 rounded-full h-2.5"><div class="bg-blue-500 h-2.5 rounded-full" style="width: ${progress}%"></div></div><span class="text-xs">${progress}%</span></td><td class="px-6 py-4 whitespace-nowrap text-sm font-medium"><button onclick="event.stopPropagation(); openModal('newTaskModal', true, getTaskById(${
+              task.id
+            }));" class="text-blue-600 hover:text-blue-900">Edit</button><button onclick="event.stopPropagation(); deleteTask(${
+              task.id
+            });" class="text-red-600 hover:text-red-900 ml-2">Delete</button></td></tr>`;
+          })
+          .join("");
+      }
+      function renderKanbanBoard() {
+        /* ... (as before, with correct onclick for edit on cards) ... */
+        const columns = {
+          "To Do": document.getElementById("kanbanColumnToDo"),
+          "In Progress": document.getElementById("kanbanColumnInProgress"),
+          Completed: document.getElementById("kanbanColumnCompleted"),
+        };
+        Object.values(columns).forEach((c) => {
+          if (c) c.innerHTML = "";
+        });
+        mockTasks.forEach((t) => {
+          let colId =
+            t.status === "Not Started" || t.status === "To Do"
+              ? "To Do"
+              : t.status === "In Progress"
+              ? "In Progress"
+              : t.status === "Completed"
+              ? "Completed"
+              : "To Do";
+          const colEl = columns[colId];
+          if (colEl) {
+            const subDone = t.subtasks?.filter((s) => s.done).length || 0;
+            const subTotal = t.subtasks?.length || 0;
+            const subProg = subTotal > 0 ? `(${subDone}/${subTotal})` : "";
+            colEl.insertAdjacentHTML(
+              "beforeend",
+              `<div class="task-card bg-white p-3 rounded-md shadow-sm border-l-4 ${
+                getPriorityClass(t.priority) === "priority-high"
+                  ? "border-red-500"
+                  : getPriorityClass(t.priority) === "priority-medium"
+                  ? "border-yellow-500"
+                  : "border-blue-500"
+              }" onclick="openTaskDetailById(${
+                t.id
+              })"><h4 class="font-medium text-sm">${
+                t.name
+              }</h4><p class="text-xs text-gray-500 mt-1">Due: ${
+                t.dueDate
+              } &bull; ${t.assignee.split(" ")[0]}</p>${
+                subTotal > 0
+                  ? `<p class="text-xs text-gray-600 mt-1">Subtasks: ${subProg}</p>`
+                  : ""
+              }<div class="mt-2 flex justify-between items-center"><span class="text-xs px-2 py-0.5 rounded-full ${getStatusClass(
+                t.status
+              )} font-semibold">${
+                t.status
+              }</span><img src="https://placehold.co/24x24/${
+                t.assignee === "Alex Robert"
+                  ? "E0E0E0/B0B0B0?text=AR"
+                  : t.assignee === "Jack Thompson"
+                  ? "D0D0D0/A0A0A0?text=JT"
+                  : "C0C0C0/909090?text=SL"
+              }" class="w-6 h-6 rounded-full" alt="${
+                t.assignee
+              }" onerror="this.src='https://placehold.co/24x24/CCCCCC/999999?text=??'"></div></div>`
+            );
+          }
+        });
+        document.getElementById("kanbanCountToDo").textContent =
+          mockTasks.filter(
+            (t) => t.status === "Not Started" || t.status === "To Do"
+          ).length;
+        document.getElementById("kanbanCountInProgress").textContent =
+          mockTasks.filter((t) => t.status === "In Progress").length;
+        document.getElementById("kanbanCountCompleted").textContent =
+          mockTasks.filter((t) => t.status === "Completed").length;
+      }
+
+      // --- Notifications ---
+      function toggleNotificationDropdown() {
+        const dropdown = document.getElementById("notificationDropdownContent");
+        if (!dropdown) return;
+        if (dropdown.style.display === "block") {
+          dropdown.style.display = "none";
+        } else {
+          renderNotifications();
+          dropdown.style.display = "block";
+        }
+      }
+      function renderNotifications() {
+        const listEl = document.getElementById("notificationList");
+        if (!listEl) return;
+        if (mockNotifications.length === 0) {
+          listEl.innerHTML =
+            '<div class="notification-item text-gray-500">No new notifications.</div>';
+          return;
+        }
+        listEl.innerHTML = mockNotifications
+          .map(
+            (notif) =>
+              `<div class="notification-item hover:bg-gray-50 cursor-pointer ${
+                notif.read ? "opacity-70" : ""
+              }" onclick="handleNotificationClick(${notif.id}, '${
+                notif.link
+              }', ${notif.taskId || null})">${notif.text}</div>`
+          )
+          .join("");
+        const unreadCount = mockNotifications.filter((n) => !n.read).length;
+        const unreadBadge = document.getElementById("notificationUnreadBadge");
+        if (unreadBadge)
+          unreadBadge.style.display = unreadCount > 0 ? "block" : "none";
+      }
+      function handleNotificationClick(notificationId, link, taskId = null) {
+        const notif = mockNotifications.find((n) => n.id === notificationId);
+        if (notif) notif.read = true;
+        toggleNotificationDropdown();
+        if (taskId && link === "#tasks") {
+          openTaskDetailById(taskId);
+        } else if (link) {
+          const viewId = link.substring(1) + "View";
+          showView(viewId);
+        }
+        renderNotifications();
+      }
+
+      // --- Refresh All Views (Centralized Update Logic) ---
+      function refreshAllViews() {
+        const activeViewEl = document.querySelector(".view:not(.hidden)");
+        if (activeViewEl) showView(activeViewEl.id);
+        else showView("dashboardView");
+        populateTimesheetTaskDropdown();
+        // Always update report data sources as they might be affected by changes in other views
+        renderWorkloadReport();
+        renderResourceAllocation();
+        renderMilestones();
+        renderAvailabilityCalendar();
+      }
+
+      // --- Initialize ---
+      document.addEventListener("DOMContentLoaded", () => {
+        showView("dashboadView");
+        renderNotifications();
+
+        const logHoursFormEl = document.getElementById("logHoursForm");
+        if (logHoursFormEl) {
+          logHoursFormEl.addEventListener("submit", function (event) {
+            event.preventDefault();
+            const timesheetTaskEl = document.getElementById("timesheetTask");
+            const timesheetDateEl = document.getElementById("timesheetDate");
+            const timesheetHoursEl = document.getElementById("timesheetHours");
+            const timesheetDescriptionEl = document.getElementById(
+              "timesheetDescription"
+            );
+            if (
+              !timesheetTaskEl ||
+              !timesheetDateEl ||
+              !timesheetHoursEl ||
+              !timesheetDescriptionEl
+            )
+              return;
+            const taskId = timesheetTaskEl.value;
+            const taskName =
+              timesheetTaskEl.options[timesheetTaskEl.selectedIndex].text;
+            const date = timesheetDateEl.value;
+            const hours = parseFloat(timesheetHoursEl.value);
+            const description = timesheetDescriptionEl.value;
+            if (!date || isNaN(hours) || hours <= 0) {
+              alert("Please enter a valid date and hours.");
+              return;
+            }
+            timeEntries.push({
+              id: timeEntries.length + 1,
+              date,
+              taskId: parseInt(taskId),
+              taskName,
+              hours,
+              description,
+            });
+            renderTimeEntries();
+            this.reset();
+            const reportsViewEl = document.getElementById("reportsView");
+            if (
+              reportsViewEl &&
+              reportsViewEl.classList.contains("active-view")
+            )
+              renderWorkloadReport();
+          });
+        }
+
+        const chatInput = document.getElementById("teamChatMessageInput");
+        if (chatInput) {
+          chatInput.addEventListener("keypress", function (e) {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              sendChatMessage();
+            }
+          });
+        }
+        document.addEventListener("click", function (event) {
+          const dropdown = document.getElementById(
+            "notificationDropdownContent"
+          );
+          const bellButton = document.getElementById("notificationBellButton");
+          if (dropdown && bellButton && dropdown.style.display === "block") {
+            if (
+              !dropdown.contains(event.target) &&
+              !bellButton.contains(event.target)
+            ) {
+              dropdown.style.display = "none";
+            }
+          }
+        });
+      });
+    </script>
+  </head>
+  <body class="flex h-screen antialiased text-gray-800">
+    <aside
+      class="w-20 bg-gray-800 text-gray-100 flex flex-col items-center py-6 space-y-6"
+    >
+      <div class="text-2xl font-bold text-blue-400">
+        <i class="fas fa-project-diagram"></i>
+      </div>
+      <nav class="flex flex-col space-y-4">
+        <a
+          href="#dashboard"
+          onclick="showView('dashboardView')"
+          class="sidebar-icon p-3 rounded-lg hover:bg-gray-700"
+          title="Dashboard"
+        >
+          <i class="fas fa-tachometer-alt fa-lg"></i>
+        </a>
+        <a
+          href="#tasks"
+          onclick="showView('tasksView')"
+          class="sidebar-icon p-3 rounded-lg hover:bg-gray-700"
+          title="Tasks"
+        >
+          <i class="fas fa-tasks fa-lg"></i>
+        </a>
+        <a
+          href="#timesheets"
+          onclick="showView('timesheetsView')"
+          class="sidebar-icon p-3 rounded-lg hover:bg-gray-700"
+          title="Timesheets"
+        >
+          <i class="fas fa-clock fa-lg"></i>
+        </a>
+        <a
+          href="#collaboration"
+          onclick="showView('collaborationView')"
+          class="sidebar-icon p-3 rounded-lg hover:bg-gray-700"
+          title="Collaboration"
+        >
+          <i class="fas fa-comments fa-lg"></i>
+        </a>
+        <a
+          href="#reports"
+          onclick="showView('reportsView')"
+          class="sidebar-icon p-3 rounded-lg hover:bg-gray-700"
+          title="Reports"
+        >
+          <i class="fas fa-chart-line fa-lg"></i>
+        </a>
+        <a
+          href="#settings"
+          onclick="showView('settingsView')"
+          class="sidebar-icon p-3 rounded-lg hover:bg-gray-700"
+          title="Settings"
+        >
+          <i class="fas fa-cog fa-lg"></i>
+        </a>
+      </nav>
+      <div
+        class="mt-auto p-3 rounded-lg hover:bg-gray-700 cursor-pointer"
+        title="Profile"
+      >
+        <i class="fas fa-user-circle fa-lg"></i>
+      </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col overflow-hidden">
+      <header class="bg-white shadow-md p-4 flex justify-between items-center">
+        <div>
+          <h1
+            class="text-2xl font-semibold text-gray-700"
+            id="currentProjectTitle"
+          >
+            Project Alpha
+          </h1>
+          <p class="text-sm text-gray-500">Marketing Campaign for Q3</p>
+        </div>
+        <div class="flex items-center space-x-4">
+          <button
+            onclick="openModal('newTaskModal')"
+            class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-150 ease-in-out flex items-center"
+          >
+            <i class="fas fa-plus mr-2"></i> New Task
+          </button>
+          <div class="relative">
+            <button
+              id="notificationBellButton"
+              onclick="toggleNotificationDropdown()"
+              class="focus:outline-none"
+            >
+              <i class="fas fa-bell fa-lg text-gray-600 cursor-pointer"></i>
+              <span
+                id="notificationUnreadBadge"
+                class="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"
+                style="display: none"
+              ></span>
+            </button>
+            <div id="notificationDropdownContent" class="notification-dropdown">
+              <div
+                class="px-4 py-2 text-sm font-semibold text-gray-700 border-b"
+              >
+                Notifications
+              </div>
+              <div id="notificationList"></div>
+              <div
+                class="px-4 py-2 text-center text-xs text-blue-500 hover:underline cursor-pointer border-t"
+              >
+                View All
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="flex-1 p-6 overflow-y-auto main-content">
+        <div id="dashboardView" class="view active-view">
+          <h2 class="text-xl font-semibold mb-4 text-gray-700">
+            Dashboard Overview
+          </h2>
+          <div
+            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6"
+          >
+            <div class="bg-white p-4 rounded-lg shadow">
+              <h3 class="text-gray-500 text-sm font-medium">Total Tasks</h3>
+              <p
+                id="summaryTotalTasks"
+                class="text-2xl font-semibold text-blue-500"
+              >
+                0
+              </p>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow">
+              <h3 class="text-gray-500 text-sm font-medium">In Progress</h3>
+              <p
+                id="summaryInProgressTasks"
+                class="text-2xl font-semibold text-yellow-500"
+              >
+                0
+              </p>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow">
+              <h3 class="text-gray-500 text-sm font-medium">Completed</h3>
+              <p
+                id="summaryCompletedTasks"
+                class="text-2xl font-semibold text-green-500"
+              >
+                0
+              </p>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow">
+              <h3 class="text-gray-500 text-sm font-medium">Overdue</h3>
+              <p
+                id="summaryOverdueTasks"
+                class="text-2xl font-semibold text-red-500"
+              >
+                0
+              </p>
+            </div>
+          </div>
+          <div class="bg-white p-6 rounded-lg shadow">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-lg font-semibold text-gray-700">All Tasks</h3>
+              <div class="flex space-x-2">
+                <input
+                  type="text"
+                  placeholder="Search tasks..."
+                  class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                />
+                <select
+                  class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                >
+                  <option>Filter by User</option>
+                  <option>Alex Robert</option>
+                  <option>Jack Thompson</option>
+                  <option>Sarah Lee</option>
+                </select>
+              </div>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th
+                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Task Name
+                    </th>
+                    <th
+                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Assignee
+                    </th>
+                    <th
+                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Status
+                    </th>
+                    <th
+                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Priority
+                    </th>
+                    <th
+                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Due Date
+                    </th>
+                    <th
+                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Progress
+                    </th>
+                    <th
+                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody
+                  id="dashboardTasksTableBody"
+                  class="bg-white divide-y divide-gray-200"
+                ></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div id="tasksView" class="view hidden">
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-semibold text-gray-700">Task Board</h2>
+            <button
+              onclick="openModal('newTaskModal')"
+              class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-150 ease-in-out flex items-center"
+            >
+              <i class="fas fa-plus mr-2"></i> Add New Task
+            </button>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-gray-100 p-4 rounded-lg shadow">
+              <h3 class="font-semibold text-gray-700 mb-3 text-center">
+                To Do (<span id="kanbanCountToDo">0</span>)
+              </h3>
+              <div id="kanbanColumnToDo" class="space-y-3 min-h-[100px]"></div>
+            </div>
+            <div class="bg-gray-100 p-4 rounded-lg shadow">
+              <h3 class="font-semibold text-gray-700 mb-3 text-center">
+                In Progress (<span id="kanbanCountInProgress">0</span>)
+              </h3>
+              <div
+                id="kanbanColumnInProgress"
+                class="space-y-3 min-h-[100px]"
+              ></div>
+            </div>
+            <div class="bg-gray-100 p-4 rounded-lg shadow">
+              <h3 class="font-semibold text-gray-700 mb-3 text-center">
+                Completed (<span id="kanbanCountCompleted">0</span>)
+              </h3>
+              <div
+                id="kanbanColumnCompleted"
+                class="space-y-3 min-h-[100px]"
+              ></div>
+            </div>
+          </div>
+          <div
+            class="mt-6 p-6 bg-white rounded-lg shadow hidden"
+            id="taskDetailView"
+          >
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-xl font-semibold">
+                Task: <span id="taskDetailTitle"></span>
+              </h3>
+              <button
+                onclick="closeTaskDetail()"
+                class="text-gray-500 hover:text-gray-700 text-2xl"
+              >
+                &times;
+              </button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700"
+                  >Assigned to:</label
+                ><select
+                  id="taskDetailAssignee"
+                  class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                ></select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700"
+                  >Due Date:</label
+                ><input
+                  type="date"
+                  id="taskDetailDueDate"
+                  class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700"
+                  >Priority:</label
+                ><select
+                  id="taskDetailPriority"
+                  class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                >
+                  <option value="Low">Low</option>
+                  <option value="Medium">Medium</option>
+                  <option value="High">High</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700"
+                  >Status:</label
+                ><select
+                  id="taskDetailStatus"
+                  class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                >
+                  <option value="Not Started">Not Started</option>
+                  <option value="To Do">To Do</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Completed">Completed</option>
+                  <option value="On Hold">On Hold</option>
+                </select>
+              </div>
+            </div>
+            <div class="mt-4">
+              <label class="block text-sm font-medium text-gray-700"
+                >Description:</label
+              ><textarea
+                id="taskDetailDescription"
+                rows="3"
+                class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                placeholder="Add a detailed description..."
+              ></textarea>
+            </div>
+            <div class="mt-4">
+              <button
+                onclick="openModal('reminderModal', false, {taskName: document.getElementById('taskDetailTitle').textContent})"
+                class="text-sm text-blue-600 hover:text-blue-800 font-semibold py-2 px-3 rounded-lg border border-blue-500 hover:bg-blue-50 flex items-center"
+              >
+                <i class="fas fa-bell mr-2"></i> Set/Edit Reminder
+              </button>
+            </div>
+            <div class="mt-4">
+              <h4 class="text-md font-semibold text-gray-700 mb-2">
+                Subtasks:
+              </h4>
+              <div id="subtaskList" class="space-y-2"></div>
+              <button
+                onclick="addSubtaskElement('subtaskList')"
+                class="mt-2 text-xs text-blue-500 hover:underline"
+              >
+                + Add Subtask
+              </button>
+            </div>
+            <div class="mt-4">
+              <h4 class="text-md font-semibold text-gray-700 mb-2">
+                Comments:
+              </h4>
+              <textarea
+                class="w-full border-gray-300 rounded-md text-sm"
+                rows="2"
+                placeholder="Add a comment... (@mention someone)"
+              ></textarea
+              ><button
+                onclick="alert('Comment posted (mock action!)')"
+                class="mt-1 text-xs bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded-md"
+              >
+                Post Comment
+              </button>
+            </div>
+            <div class="mt-4">
+              <h4 class="text-md font-semibold text-gray-700 mb-2">Files:</h4>
+              <ul id="taskFilesList" class="space-y-1"></ul>
+              <button
+                onclick="mockUploadTaskFile()"
+                class="mt-2 text-xs text-blue-500 hover:underline bg-gray-100 px-2 py-1 rounded"
+              >
+                + Attach File
+              </button>
+            </div>
+            <div
+              id="taskDetailActionButtons"
+              class="mt-6 flex justify-end items-center space-x-2"
+            ></div>
+            <div class="mt-2 text-right">
+              <button
+                onclick="closeTaskDetail()"
+                class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg mr-2"
+              >
+                Cancel</button
+              ><button
+                onclick="saveTaskDetail()"
+                class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg"
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div id="timesheetsView" class="view hidden">
+          <h2 class="text-xl font-semibold mb-6 text-gray-700">
+            Log Work Hours
+          </h2>
+          <div class="bg-white p-6 rounded-lg shadow mb-6">
+            <form id="logHoursForm" class="space-y-4">
+              <div>
+                <label
+                  for="timesheetTask"
+                  class="block text-sm font-medium text-gray-700"
+                  >Task</label
+                >
+                <select
+                  id="timesheetTask"
+                  name="timesheetTask"
+                  class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                ></select>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label
+                    for="timesheetDate"
+                    class="block text-sm font-medium text-gray-700"
+                    >Date</label
+                  >
+                  <input
+                    type="date"
+                    id="timesheetDate"
+                    name="timesheetDate"
+                    class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    required
+                  />
+                </div>
+                <div>
+                  <label
+                    for="timesheetHours"
+                    class="block text-sm font-medium text-gray-700"
+                    >Hours Worked</label
+                  >
+                  <input
+                    type="number"
+                    id="timesheetHours"
+                    name="timesheetHours"
+                    min="0.1"
+                    step="0.1"
+                    class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    placeholder="e.g., 2.5"
+                    required
+                  />
+                </div>
+              </div>
+              <div>
+                <label
+                  for="timesheetDescription"
+                  class="block text-sm font-medium text-gray-700"
+                  >Description (Optional)</label
+                >
+                <textarea
+                  id="timesheetDescription"
+                  name="timesheetDescription"
+                  rows="2"
+                  class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  placeholder="What did you work on?"
+                ></textarea>
+              </div>
+              <div>
+                <button
+                  type="submit"
+                  class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-150 ease-in-out"
+                >
+                  Log Hours
+                </button>
+              </div>
+            </form>
+          </div>
+          <h3 class="text-lg font-semibold mb-4 text-gray-700">
+            My Time Entries
+          </h3>
+          <div class="bg-white p-6 rounded-lg shadow">
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th
+                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Date
+                    </th>
+                    <th
+                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Task
+                    </th>
+                    <th
+                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Hours
+                    </th>
+                    <th
+                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Description
+                    </th>
+                    <th
+                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody
+                  id="timeEntriesList"
+                  class="bg-white divide-y divide-gray-200"
+                >
+                  <tr>
+                    <td
+                      colspan="5"
+                      class="px-6 py-4 text-center text-gray-500 text-sm"
+                    >
+                      No time logged yet.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div id="collaborationView" class="view hidden">
+          <h2 class="text-xl font-semibold mb-4 text-gray-700">
+            Collaboration Hub
+          </h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white p-6 rounded-lg shadow">
+              <h3 class="text-lg font-semibold text-gray-700 mb-3">
+                Team Chat
+              </h3>
+              <div
+                id="teamChatBox"
+                class="h-64 border border-gray-200 rounded-md p-3 overflow-y-auto mb-3 space-y-2"
+              ></div>
+              <div class="flex">
+                <input
+                  type="text"
+                  id="teamChatMessageInput"
+                  placeholder="Type your message..."
+                  class="flex-grow px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <button
+                  onclick="sendChatMessage()"
+                  class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 py-2 rounded-r-md"
+                >
+                  Send
+                </button>
+              </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow">
+              <h3 class="text-lg font-semibold text-gray-700 mb-3">
+                Shared Files
+              </h3>
+              <ul id="sharedFilesList" class="space-y-2"></ul>
+              <button
+                onclick="mockUploadSharedFile()"
+                class="mt-4 bg-blue-500 hover:bg-blue-600 text-white text-sm py-2 px-3 rounded-md"
+              >
+                <i class="fas fa-upload mr-1"></i> Upload File
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div id="reportsView" class="view hidden">
+          <h2 class="text-xl font-semibold mb-4 text-gray-700">
+            Project Reports
+          </h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div class="bg-white p-6 rounded-lg shadow">
+              <h3 class="text-lg font-semibold text-gray-700 mb-3">
+                Timeline / Gantt View (Conceptual)
+              </h3>
+              <p class="text-sm text-gray-600 mb-2">
+                Visual timeline of tasks, dependencies, and project progress.
+              </p>
+              <div
+                class="h-auto bg-gray-50 border border-gray-200 rounded-md p-4 text-gray-600"
+              >
+                <p class="text-xs text-gray-500 mb-2">
+                  Jan | Feb | Mar | Apr | May | Jun | Jul | Aug
+                </p>
+                <div class="timeline-bar-container">
+                  <div class="timeline-label">Task 1: Research</div>
+                  <div
+                    class="timeline-bar timeline-bar-green"
+                    style="width: 20%; margin-left: 0%"
+                  ></div>
+                </div>
+                <div class="timeline-bar-container">
+                  <div class="timeline-label">Task 2: Design</div>
+                  <div
+                    class="timeline-bar timeline-bar-blue"
+                    style="width: 30%; margin-left: 15%"
+                  ></div>
+                </div>
+                <div class="timeline-bar-container">
+                  <div class="timeline-label">Milestone 1</div>
+                  <div style="margin-left: 30%">
+                    <i class="fas fa-flag-checkered text-red-500"></i>
+                  </div>
+                </div>
+                <div class="timeline-bar-container">
+                  <div class="timeline-label">Task 3: Develop</div>
+                  <div
+                    class="timeline-bar timeline-bar-yellow"
+                    style="width: 35%; margin-left: 30%"
+                  ></div>
+                </div>
+                <div class="text-xs text-gray-400 mt-2">
+                  (Simplified visual concept of a timeline)
+                </div>
+              </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow">
+              <div class="flex justify-between items-center mb-3">
+                <h3 class="text-lg font-semibold text-gray-700">
+                  Project Milestones
+                </h3>
+                <button
+                  onclick="openModal('addMilestoneModal')"
+                  class="text-sm text-blue-500 hover:underline bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded-md"
+                >
+                  + Add Milestone
+                </button>
+              </div>
+              <ul id="milestonesList" class="space-y-2 text-sm"></ul>
+            </div>
+          </div>
+          <div class="bg-white p-6 rounded-lg shadow mb-6">
+            <h3 class="text-lg font-semibold text-gray-700 mb-3">
+              Workload: Estimated vs. Actual
+            </h3>
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th
+                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Task Name
+                    </th>
+                    <th
+                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Estimated Hours
+                    </th>
+                    <th
+                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Actual Hours
+                    </th>
+                    <th
+                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Variance
+                    </th>
+                  </tr>
+                </thead>
+                <tbody
+                  id="workloadReportTable"
+                  class="bg-white divide-y divide-gray-200"
+                ></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white p-6 rounded-lg shadow">
+              <div class="flex justify-between items-center mb-3">
+                <h3 class="text-lg font-semibold text-gray-700">
+                  Team Member Availability
+                </h3>
+                <div
+                  class="text-lg font-semibold text-gray-700"
+                  id="calendarMonthYear"
+                >
+                  May 2025
+                </div>
+                <div>
+                  <button
+                    onclick="changeCalendarMonth(-1)"
+                    class="text-blue-500 hover:text-blue-700 px-2 py-1 rounded-md"
+                  >
+                    <i class="fas fa-chevron-left"></i>
+                  </button>
+                  <button
+                    onclick="changeCalendarMonth(1)"
+                    class="text-blue-500 hover:text-blue-700 px-2 py-1 rounded-md"
+                  >
+                    <i class="fas fa-chevron-right"></i>
+                  </button>
+                </div>
+              </div>
+              <div id="availabilityCalendar" class="calendar-grid"></div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow">
+              <h3 class="text-lg font-semibold text-gray-700 mb-3">
+                Resource Allocation Overview
+              </h3>
+              <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                  <thead class="bg-gray-50">
+                    <tr>
+                      <th
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Team Member
+                      </th>
+                      <th
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Assigned Tasks
+                      </th>
+                      <th
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Total Load (%)
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody
+                    id="resourceAllocationTable"
+                    class="bg-white divide-y divide-gray-200"
+                  ></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="settingsView" class="view hidden">
+          <h2 class="text-xl font-semibold mb-4 text-gray-700">
+            Project Settings
+          </h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white p-6 rounded-lg shadow">
+              <h3 class="text-lg font-semibold text-gray-700 mb-3">
+                Team Roles & Permissions
+              </h3>
+              <p class="text-sm text-gray-600 mb-2">
+                Manage who can see and do what in this project.
+              </p>
+              <ul>
+                <li class="text-sm py-1">
+                  Alex Robert - Project Manager (Admin)
+                </li>
+                <li class="text-sm py-1">
+                  Jack Thompson - Team Member (Edit Tasks)
+                </li>
+                <li class="text-sm py-1">
+                  Sarah Lee - Team Member (View Only)
+                </li>
+              </ul>
+              <button
+                onclick="alert('Role management dialog would open (mock action!)')"
+                class="mt-3 text-sm text-blue-500 hover:underline"
+              >
+                + Manage Roles
+              </button>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow">
+              <h3 class="text-lg font-semibold text-gray-700 mb-3">
+                Project Templates & Workflows
+              </h3>
+              <p class="text-sm text-gray-600 mb-2">
+                Use pre-defined templates for new projects or create custom
+                workflows.
+              </p>
+              <button
+                onclick="alert('Template selection would occur (mock action!)')"
+                class="mt-3 text-sm bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 px-3 rounded-md"
+              >
+                Use 'Marketing Campaign' Template
+              </button>
+              <button
+                onclick="alert('Workflow creation dialog would open (mock action!)')"
+                class="mt-3 ml-2 text-sm text-blue-500 hover:underline"
+              >
+                Create New Workflow
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <div id="newTaskModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <span id="modalTitle">Create New Task</span
+          ><span class="close-button" onclick="closeModal('newTaskModal')"
+            >&times;</span
+          >
+        </div>
+        <div class="modal-body">
+          <form id="taskForm">
+            <div>
+              <label
+                for="taskNameInput"
+                class="block text-sm font-medium text-gray-700"
+                >Task Name</label
+              ><input
+                type="text"
+                id="taskNameInput"
+                class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                placeholder="Enter task name"
+                required
+              />
+            </div>
+            <div class="mt-4">
+              <label
+                for="taskDescriptionInput"
+                class="block text-sm font-medium text-gray-700"
+                >Description</label
+              ><textarea
+                id="taskDescriptionInput"
+                rows="3"
+                class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                placeholder="Add a detailed description..."
+              ></textarea>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <div>
+                <label
+                  for="taskAssigneeModal"
+                  class="block text-sm font-medium text-gray-700"
+                  >Assignee</label
+                ><select
+                  id="taskAssigneeModal"
+                  class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                ></select>
+              </div>
+              <div>
+                <label
+                  for="taskDueDateModal"
+                  class="block text-sm font-medium text-gray-700"
+                  >Due Date</label
+                ><input
+                  type="date"
+                  id="taskDueDateModal"
+                  class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                />
+              </div>
+              <div>
+                <label
+                  for="taskPriorityModal"
+                  class="block text-sm font-medium text-gray-700"
+                  >Priority</label
+                ><select
+                  id="taskPriorityModal"
+                  class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                >
+                  <option value="Low">Low</option>
+                  <option value="Medium">Medium</option>
+                  <option value="High">High</option>
+                </select>
+              </div>
+              <div>
+                <label
+                  for="taskStatusModal"
+                  class="block text-sm font-medium text-gray-700"
+                  >Status</label
+                ><select
+                  id="taskStatusModal"
+                  class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                >
+                  <option value="Not Started">Not Started</option>
+                  <option value="To Do">To Do</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Completed">Completed</option>
+                  <option value="On Hold">On Hold</option>
+                </select>
+              </div>
+              <div>
+                <label
+                  for="taskEstimatedHoursInput"
+                  class="block text-sm font-medium text-gray-700"
+                  >Estimated Hours</label
+                ><input
+                  type="number"
+                  id="taskEstimatedHoursInput"
+                  min="0"
+                  step="0.5"
+                  class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  placeholder="e.g., 8"
+                />
+              </div>
+            </div>
+            <div class="mt-4">
+              <h4 class="text-md font-semibold text-gray-700 mb-2">
+                Subtasks:
+              </h4>
+              <div id="modalSubtaskList" class="space-y-2"></div>
+              <button
+                type="button"
+                onclick="addSubtaskElement('modalSubtaskList')"
+                class="mt-2 text-xs text-blue-500 hover:underline"
+              >
+                + Add Subtask
+              </button>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg mr-2"
+            onclick="closeModal('newTaskModal')"
+          >
+            Cancel</button
+          ><button
+            type="button"
+            class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg"
+            onclick="saveTaskFromModal()"
+          >
+            Save Task
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="reminderModal" class="modal">
+      <div class="modal-content modal-content-sm">
+        <div class="modal-header">
+          <span id="reminderModalTitle">Set Reminder</span
+          ><span class="close-button" onclick="closeModal('reminderModal')"
+            >&times;</span
+          >
+        </div>
+        <div class="modal-body">
+          <p class="text-sm mb-2">
+            Set a reminder for task: <strong id="reminderTaskName"></strong>
+          </p>
+          <div>
+            <label
+              for="reminderDate"
+              class="block text-sm font-medium text-gray-700"
+              >Reminder Date</label
+            ><input
+              type="date"
+              id="reminderDate"
+              class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            />
+          </div>
+          <div class="mt-4">
+            <label
+              for="reminderTime"
+              class="block text-sm font-medium text-gray-700"
+              >Reminder Time</label
+            ><input
+              type="time"
+              id="reminderTime"
+              class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            />
+          </div>
+          <p class="text-xs text-gray-500 mt-4">
+            Note: This is a mock reminder.
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg mr-2"
+            onclick="closeModal('reminderModal')"
+          >
+            Cancel</button
+          ><button
+            type="button"
+            class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg"
+            onclick="saveReminder()"
+          >
+            Set Reminder
+          </button>
+        </div>
+      </div>
+    </div>
+    <div id="addMilestoneModal" class="modal">
+      <div class="modal-content modal-content-sm">
+        <div class="modal-header">
+          <span>Add New Milestone</span
+          ><span class="close-button" onclick="closeModal('addMilestoneModal')"
+            >&times;</span
+          >
+        </div>
+        <div class="modal-body">
+          <form id="milestoneForm">
+            <div>
+              <label
+                for="milestoneNameInput"
+                class="block text-sm font-medium text-gray-700"
+                >Milestone Name</label
+              ><input
+                type="text"
+                id="milestoneNameInput"
+                class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                required
+              />
+            </div>
+            <div class="mt-4">
+              <label
+                for="milestoneDueDateInput"
+                class="block text-sm font-medium text-gray-700"
+                >Due Date</label
+              ><input
+                type="date"
+                id="milestoneDueDateInput"
+                class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                required
+              />
+            </div>
+            <div class="mt-4">
+              <label
+                for="milestoneStatusInput"
+                class="block text-sm font-medium text-gray-700"
+                >Status</label
+              ><select
+                id="milestoneStatusInput"
+                class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              >
+                <option value="Planned">Planned</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Completed">Completed</option>
+              </select>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg mr-2"
+            onclick="closeModal('addMilestoneModal')"
+          >
+            Cancel</button
+          ><button
+            type="button"
+            class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg"
+            onclick="saveMilestone()"
+          >
+            Save Milestone
+          </button>
+        </div>
+      </div>
+    </div>
+    <div id="editAvailabilityModal" class="modal">
+      <div class="modal-content modal-content-sm">
+        <div class="modal-header">
+          <span>Edit Availability</span
+          ><span
+            class="close-button"
+            onclick="closeModal('editAvailabilityModal')"
+            >&times;</span
+          >
+        </div>
+        <div class="modal-body">
+          <p class="text-sm mb-2">
+            Editing availability for:
+            <strong id="availabilityModalDate"></strong>
+          </p>
+          <div>
+            <label
+              for="availabilityMemberSelect"
+              class="block text-sm font-medium text-gray-700"
+              >Team Member</label
+            ><select
+              id="availabilityMemberSelect"
+              class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            ></select>
+          </div>
+          <div class="mt-4">
+            <label
+              for="availabilityStatusSelect"
+              class="block text-sm font-medium text-gray-700"
+              >Status</label
+            ><select
+              id="availabilityStatusSelect"
+              class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            >
+              <option value="available">Available</option>
+              <option value="tentative">Tentative</option>
+              <option value="unavailable">Unavailable</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg mr-2"
+            onclick="closeModal('editAvailabilityModal')"
+          >
+            Cancel</button
+          ><button
+            type="button"
+            class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg"
+            onclick="saveAvailability()"
+          >
+            Save Availability
+          </button>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
