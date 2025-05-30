@@ -737,8 +737,8 @@
         },
       ];
       let userProfile = {
-        name: "Current User",
-        email: "user@example.com",
+        name: "Alex Robert",
+        email: "alex.robert@gmail.com",
         interests: [],
         associations: [],
       };
@@ -799,6 +799,22 @@
 
         alert("Profile saved successfully!");
         closeModal("profileModal");
+      }
+
+      function setupProfileModal() {
+        document.getElementById("profileName").value = userProfile.name;
+        document.getElementById("profileEmail").value = userProfile.email;
+        document.getElementById("profileInterests").value =
+          userProfile.interests.join(", ");
+        document.getElementById("profileAssociations").value =
+          userProfile.associations.join(", ");
+
+        if (
+          userProfile.interests.length > 0 ||
+          userProfile.associations.length > 0
+        ) {
+          findMatchingColleagues();
+        }
       }
 
       function findMatchingColleagues() {
@@ -942,6 +958,7 @@
         if (!modal) return;
         if (modalId === "newTaskModal") setupNewTaskModal(isEdit, data);
         if (modalId === "addMilestoneModal") setupAddMilestoneModal();
+        if (modalId === "profileModal") setupProfileModal();
         if (modalId === "editAvailabilityModal" && data)
           setupEditAvailabilityModal(data.date, data.dayNumber);
         if (modalId === "reminderModal" && data)
@@ -3318,7 +3335,6 @@
                 <input
                   type="text"
                   id="profileName"
-                  value="Current User"
                   class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 />
               </div>
@@ -3331,7 +3347,6 @@
                 <input
                   type="email"
                   id="profileEmail"
-                  value="user@example.com"
                   class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 />
               </div>
